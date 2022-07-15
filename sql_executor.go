@@ -7,16 +7,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mataleao/poctools/dto"
 	"github.com/mataleao/poctools/enum"
 )
 
 type SqlExecutor interface {
-	ReadMany(sql string, entity interface{}, p dto.ApiParams, pars ...interface{}) (total int64, err error)
+	ReadMany(sql string, entity interface{}, p ApiParams, pars ...interface{}) (total int64, err error)
 	ReadOne(sqlStmt string, entity interface{}, pars ...interface{}) error
 	Write(sql string, entity interface{}) (uint64, error)
-	GetPaginatedQuery(query string, p dto.ApiParams) (result string, paginationParams []interface{})
-	GetFilteredQuery(query string, f []dto.Filter) (result string, pars []interface{})
+	GetPaginatedQuery(query string, p ApiParams) (result string, paginationParams []interface{})
+	GetFilteredQuery(query string, f []Filter) (result string, pars []interface{})
 }
 
 const (
@@ -36,7 +35,7 @@ func (S *sqlExecutor) ReadOne(query string, entity interface{}, pars ...interfac
 }
 
 //TODO make apiParam optional
-func (S *sqlExecutor) ReadMany(sql string, entity interface{}, apiParam dto.ApiParams, pars ...interface{}) (total int64, err error) {
+func (S *sqlExecutor) ReadMany(sql string, entity interface{}, apiParam ApiParams, pars ...interface{}) (total int64, err error) {
 
 	queryToBeCounted, extraParsToBeCounted := S.GetFilteredQuery(sql, apiParam.Filters)
 	extraParsToBeCounted = append(pars, extraParsToBeCounted...)
@@ -96,7 +95,7 @@ func (S *sqlExecutor) Write(sql string, entity interface{}) (uint64, error) {
 	return S.ds.Write(sql, entity)
 }
 
-func (S *sqlExecutor) GetPaginatedQuery(query string, p dto.ApiParams) (result string, paginationParams []interface{}) {
+func (S *sqlExecutor) GetPaginatedQuery(query string, p ApiParams) (result string, paginationParams []interface{}) {
 
 	ordered := false
 	marker, err := strconv.Atoi(p.Pagination.Marker)
@@ -144,7 +143,7 @@ func (S *sqlExecutor) GetPaginatedQuery(query string, p dto.ApiParams) (result s
 	return query, paginationParams
 }
 
-func (S *sqlExecutor) GetFilteredQuery(query string, f []dto.Filter) (result string, pars []interface{}) {
+func (S *sqlExecutor) GetFilteredQuery(query string, f []Filter) (result string, pars []interface{}) {
 
 	if len(f) == 0 {
 		return query, pars
@@ -178,7 +177,7 @@ func (S *sqlExecutor) GetFilteredQuery(query string, f []dto.Filter) (result str
 	return query, pars
 }
 
-func (*sqlExecutor) appendFiltersConditions(f []dto.Filter, pars []interface{}, query string) ([]interface{}, string) {
+func (*sqlExecutor) appendFiltersConditions(f []Filter, pars []interface{}, query string) ([]interface{}, string) {
 	for _, filter := range f {
 		pars = append(pars, filter.Value)
 		query = fmt.Sprintf("%s%s=? ", query, filter.WhereField)

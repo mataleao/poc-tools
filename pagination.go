@@ -7,15 +7,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mataleao/poctools/config"
-	"github.com/mataleao/poctools/dto"
 )
 
-func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params dto.ApiParams, label string, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (dto.PaginationResponse[DTO], error) {
+func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params ApiParams, label string, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
 
-	response := dto.PaginationResponse[DTO]{}
+	response := PaginationResponse[DTO]{}
 
 	if params.Order == nil {
-		params.Order = &dto.Order{OrderField: "id"}
+		params.Order = &Order{OrderField: "id"}
 	}
 
 	resultList := make([]DBE, 0)
@@ -39,8 +38,8 @@ func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params dto.ApiPar
 	return response, err
 }
 
-func GeneratePaginationFromRequest(c *gin.Context) dto.Pagination {
-	p := dto.Pagination{}
+func GeneratePaginationFromRequest(c *gin.Context) Pagination {
+	p := Pagination{}
 
 	query := c.Request.URL.Query()
 	for key, value := range query {
@@ -65,9 +64,9 @@ func GeneratePaginationFromRequest(c *gin.Context) dto.Pagination {
 
 }
 
-func PreparePaginationResponse(p dto.ApiParams, totalLines int64, list interface{}) (dto.PaginationNavigationData, error) {
+func PreparePaginationResponse(p ApiParams, totalLines int64, list interface{}) (PaginationNavigationData, error) {
 
-	var pnd dto.PaginationNavigationData
+	var pnd PaginationNavigationData
 	if len(p.RequestedURLPath) == 0 {
 		return pnd, fmt.Errorf("the request URL path is empty")
 	}
@@ -86,7 +85,7 @@ func PreparePaginationResponse(p dto.ApiParams, totalLines int64, list interface
 	return pnd, nil
 }
 
-func computeNextAndPrevious(p dto.Pagination, totalLines int64) (int64, int64) {
+func computeNextAndPrevious(p Pagination, totalLines int64) (int64, int64) {
 	marker, err := strconv.ParseInt(p.Marker, 10, 64)
 	if err != nil {
 		marker = 0
@@ -121,8 +120,8 @@ func computeNextAndPrevious(p dto.Pagination, totalLines int64) (int64, int64) {
 	total 	Total number of lines of the table content
 	limit   Limit used to group the total number of lines
 */
-func getPaginationNavigationData(urlPath string, previousMarker, nextMarker int64, total, limit int64) (dto.PaginationNavigationData, error) {
-	p := dto.PaginationNavigationData{}
+func getPaginationNavigationData(urlPath string, previousMarker, nextMarker int64, total, limit int64) (PaginationNavigationData, error) {
+	p := PaginationNavigationData{}
 
 	var sb strings.Builder
 	sb.WriteString(urlPath)
@@ -151,6 +150,6 @@ func getPaginationNavigationData(urlPath string, previousMarker, nextMarker int6
 	return p, nil
 }
 
-func getDefaultPaginationRequest() dto.Pagination {
-	return dto.Pagination{Marker: "", Limit: config.DefaultPaginationLimit}
+func getDefaultPaginationRequest() Pagination {
+	return Pagination{Marker: "", Limit: config.DefaultPaginationLimit}
 }
