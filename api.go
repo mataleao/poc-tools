@@ -1,6 +1,10 @@
 // Implementation of https://github.secureserver.net/CTO/guidelines/tree/master/api-design#pagination
 package poctools
 
+import (
+	"github.com/gin-gonic/gin"
+)
+
 type logger interface {
 	Debug(msg string, fields ...interface{})
 	Info(msg string, fields ...interface{})
@@ -64,4 +68,36 @@ func NoOrders() []Order {
 
 func NoFilters() []Filter {
 	return make([]Filter, 0)
+}
+
+func FindFilterByKey(key string, list []Filter) *Filter {
+	for i, b := range list {
+		if b.Name == key {
+			return &list[i]
+		}
+	}
+	return nil
+}
+
+func CreateApiParam(ctx *gin.Context, fields []Filter) ApiParams {
+	pagination := GeneratePaginationFromRequest(ctx)
+	filters := GenerateFilterFromRequest(ctx, fields)
+	requestedURLPath := ctx.Request.URL.Path
+	return ApiParams{RequestedURLPath: requestedURLPath, Filters: filters, Pagination: pagination}
+}
+
+func GenerateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
+	fs := []Filter{}
+	query := c.Request.URL.Query()
+
+	for key, value := range query {
+		filter := FindFilterByKey(key, fields)
+		if filter != nil {
+			queryValue := value[len(value)-1]
+			filter.Value = queryValue
+			fs = append(fs, *filter)
+		}
+	}
+
+	return fs
 }
