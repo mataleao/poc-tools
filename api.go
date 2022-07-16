@@ -70,20 +70,36 @@ func NoFilters() []Filter {
 	return make([]Filter, 0)
 }
 
-func FindFilterByKey(key string, list []Filter) *Filter {
-	for i, b := range list {
-		if b.Name == key {
-			return &list[i]
-		}
-	}
-	return nil
-}
+func CreateApiParam(ctx *gin.Context, fields []Filter, orders []Order) ApiParams {
 
-func CreateApiParam(ctx *gin.Context, fields []Filter) ApiParams {
 	pagination := GeneratePaginationFromRequest(ctx)
 	filters := GenerateFilterFromRequest(ctx, fields)
+	order := GenerateOrderFromRequest(ctx, orders)
+
 	requestedURLPath := ctx.Request.URL.Path
-	return ApiParams{RequestedURLPath: requestedURLPath, Filters: filters, Pagination: pagination}
+	return ApiParams{
+		RequestedURLPath: requestedURLPath,
+		Filters:          filters,
+		Pagination:       pagination,
+		Order:            order,
+	}
+}
+
+func GenerateOrderFromRequest(c *gin.Context, orders []Order) *Order {
+	query := c.Request.URL.Query()
+
+	for key, value := range query {
+		// Found the order key
+		if key == "order" {
+			queryValue := value[len(value)-1]
+			order := FindOrderByKey(queryValue, orders)
+			if order != nil {
+				return order
+			}
+		}
+
+	}
+	return nil
 }
 
 func GenerateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
@@ -100,4 +116,22 @@ func GenerateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
 	}
 
 	return fs
+}
+
+func FindFilterByKey(key string, list []Filter) *Filter {
+	for i, b := range list {
+		if b.Name == key {
+			return &list[i]
+		}
+	}
+	return nil
+}
+
+func FindOrderByKey(key string, list []Order) *Order {
+	for i, b := range list {
+		if b.Name == key {
+			return &list[i]
+		}
+	}
+	return nil
 }
