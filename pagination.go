@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FindAllPaged[T any](s SqlExecutor, sql string, params ApiParams, response *PaginationResponse[T], args ...interface{}) error {
+func FindAllPaged[T any](s SqlExecutor, sql string, params ApiParams, response PaginationResponse[T], args ...interface{}) error {
 
 	if params.Order == nil {
 		params.Order = &Order{OrderField: "id"}
