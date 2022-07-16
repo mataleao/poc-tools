@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params ApiParams, label string, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
+func FindAllPaged[DBE any, DTO any](s SqlExecutor, sql string, params ApiParams, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
 
 	response := PaginationResponse[DTO]{}
 
@@ -19,8 +19,7 @@ func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params ApiParams,
 	resultList := make([]DBE, 0)
 	totalLines, err := s.ReadMany(sql, &resultList, params, args...)
 	if err != nil {
-		message := fmt.Sprintf("unable to read paged %s", label)
-		return response, fmt.Errorf(message)
+		return response, fmt.Errorf("unable to read paged object")
 	}
 
 	// Covert the result for DTOs
@@ -30,8 +29,7 @@ func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params ApiParams,
 	// Prepare the pagination response
 	response.Pagination, err = PreparePaginationResponse(params, totalLines, resultList)
 	if err != nil {
-		message := fmt.Sprintf("unable to read paged %s", label)
-		return response, fmt.Errorf(message)
+		return response, fmt.Errorf("unable to read paged object")
 	}
 
 	return response, err
