@@ -5,14 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type logger interface {
-	Debug(msg string, fields ...interface{})
-	Info(msg string, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-	With(fields map[string]interface{}) logger
-}
-
 // This structure comes from the UI with pagination data
 type Pagination struct {
 	// Maximum number of lines per query, positive means forward values and negative means backward values
@@ -59,7 +51,7 @@ type ApiParams struct {
 	Order            *Order
 	Pagination       Pagination
 	Options          map[string]bool
-	Logger           logger
+	Logger           interface{}
 }
 
 func NoOrders() []Order {
@@ -82,7 +74,7 @@ func CreateApiParam(ctx *gin.Context, log interface{}, fields []Filter, orders [
 		Filters:          filters,
 		Pagination:       pagination,
 		Order:            order,
-		Logger:           log.(logger),
+		Logger:           log,
 	}
 }
 
