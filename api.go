@@ -70,7 +70,7 @@ func NoFilters() []Filter {
 	return make([]Filter, 0)
 }
 
-func CreateApiParam(ctx *gin.Context, log logger, fields []Filter, orders []Order) ApiParams {
+func CreateApiParam(ctx *gin.Context, log interface{}, fields []Filter, orders []Order) ApiParams {
 
 	pagination := GeneratePaginationFromRequest(ctx)
 	filters := GenerateFilterFromRequest(ctx, fields)
@@ -82,7 +82,7 @@ func CreateApiParam(ctx *gin.Context, log logger, fields []Filter, orders []Orde
 		Filters:          filters,
 		Pagination:       pagination,
 		Order:            order,
-		Logger:           log,
+		Logger:           log.(logger),
 	}
 }
 
