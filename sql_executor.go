@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/mataleao/poctools/enum"
 )
 
 type SqlExecutor interface {
@@ -54,7 +52,7 @@ func (S *sqlExecutor) ReadMany(sql string, entity interface{}, apiParam ApiParam
 		S.reverseResult(entity)
 	}
 
-	if !apiParam.Options[enum.Option.NoCount] {
+	if !apiParam.Options[Option.NoCount] {
 		var res []int64
 		_, hasGroupBy, _, _ := S.testClauses(query)
 		var countQuery string

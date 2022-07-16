@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mataleao/poctools/config"
 )
 
 func FindAllPaged[DBE any, DTO any](sql string, s SqlExecutor, params ApiParams, label string, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
@@ -151,5 +150,5 @@ func getPaginationNavigationData(urlPath string, previousMarker, nextMarker int6
 }
 
 func getDefaultPaginationRequest() Pagination {
-	return Pagination{Marker: "", Limit: config.DefaultPaginationLimit}
+	return Pagination{Marker: "", Limit: DefaultPaginationLimit}
 }
