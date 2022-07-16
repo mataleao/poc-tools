@@ -8,15 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FindAllPaged[T any](s SqlExecutor, sql string, params ApiParams, args ...interface{}) (PaginationResponse[T], error) {
+func FindAllPaged(s SqlExecutor, sql string, params ApiParams, args ...interface{}) (PaginationResponse[interface{}], error) {
 
-	response := PaginationResponse[T]{}
+	response := PaginationResponse[interface{}]{}
 
 	if params.Order == nil {
 		params.Order = &Order{OrderField: "id"}
 	}
 
-	resultList := make([]T, 0)
+	resultList := make([]interface{}, 0)
 	totalLines, err := s.ReadMany(sql, &resultList, params, args...)
 	if err != nil {
 		return response, fmt.Errorf("unable to read paged object")
