@@ -1,6 +1,14 @@
 // Implementation of https://github.secureserver.net/CTO/guidelines/tree/master/api-design#pagination
 package poctools
 
+type logger interface {
+	Debug(msg string, fields ...interface{})
+	Info(msg string, fields ...interface{})
+	Warn(msg string, fields ...interface{})
+	Error(msg string, fields ...interface{})
+	With(fields map[string]interface{}) logger
+}
+
 // This structure comes from the UI with pagination data
 type Pagination struct {
 	// Maximum number of lines per query, positive means forward values and negative means backward values
@@ -47,6 +55,7 @@ type ApiParams struct {
 	Order            *Order
 	Pagination       Pagination
 	Options          map[string]bool
+	Logger           logger
 }
 
 func NoOrders() []Order {

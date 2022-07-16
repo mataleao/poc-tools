@@ -2,7 +2,6 @@ package poctools
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/mataleao/poctools/sqlexecutor"
 )
 
 type DbSession interface {
@@ -36,7 +35,7 @@ func (S *dbSessionImpl) ReadOne(query string, entity interface{}, pars ...interf
 	if S.tx != nil {
 		return S.tx.QueryRowx(query, pars...).StructScan(entity)
 	}
-	return sqlexecutor.GetDbEngine().QueryRowx(query, pars...).StructScan(entity)
+	return GetDbEngine().QueryRowx(query, pars...).StructScan(entity)
 }
 
 func (S *dbSessionImpl) ReadMany(query string, entity interface{}, pars ...interface{}) error {
@@ -44,14 +43,14 @@ func (S *dbSessionImpl) ReadMany(query string, entity interface{}, pars ...inter
 		return S.tx.Select(entity, query, pars...)
 	}
 
-	return sqlexecutor.GetDbEngine().Select(entity, query, pars...)
+	return GetDbEngine().Select(entity, query, pars...)
 }
 
 func (S *dbSessionImpl) Write(sql string, entity interface{}) (uint64, error) {
 	var err error
 
 	if S.tx == nil {
-		S.tx, err = sqlexecutor.GetTransactionObject()
+		S.tx, err = GetTransactionObject()
 		if err != nil {
 			return 0, err
 		}

@@ -1,4 +1,4 @@
-package sqlexecutor
+package poctools
 
 import (
 	"github.com/jmoiron/sqlx"
