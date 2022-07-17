@@ -17,7 +17,7 @@ type paginator[S any, D any] struct {
 	args           []interface{}
 }
 
-func PaginatorFor[S any, D any](entity S, dto D) *paginator[S, D] {
+func Paginator[S any, D any](entity S, dto D) *paginator[S, D] {
 	return &paginator[S, D]{}
 }
 
