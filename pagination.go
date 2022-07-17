@@ -13,7 +13,7 @@ type paginator[T any] struct {
 	sql            string
 	params         ApiParams
 	response       PaginationResponse[T]
-	funcMapDbToDto func(any) []T
+	funcMapDbToDto func([]any) []T
 	args           []interface{}
 }
 
@@ -31,17 +31,17 @@ func (p *paginator[T]) WithQuery(query string) *paginator[T] {
 	return p
 }
 
-func (p *paginator[T]) WithParams(params ApiParams) *paginator[T] {
+func (p *paginator[T]) WithApiParams(params ApiParams) *paginator[T] {
 	p.params = params
 	return p
 }
 
-func (p *paginator[T]) WithMapperFunc(funcMapDbToDto func(any) []T) *paginator[T] {
+func (p *paginator[T]) WithMapperFunc(funcMapDbToDto func([]any) []T) *paginator[T] {
 	p.funcMapDbToDto = funcMapDbToDto
 	return p
 }
 
-func (p *paginator[T]) WithArgs(args ...interface{}) *paginator[T] {
+func (p *paginator[T]) WithQueryArgs(args ...interface{}) *paginator[T] {
 	p.args = append(p.args, args...)
 	return p
 }
