@@ -8,45 +8,45 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type paginator[T any] struct {
+type paginator[S any, D any] struct {
 	s              SqlExecutor
 	sql            string
 	params         ApiParams
-	response       PaginationResponse[T]
-	funcMapDbToDto func([]any) []T
+	response       PaginationResponse[D]
+	funcMapDbToDto func([]S) []D
 	args           []interface{}
 }
 
-func PaginatorFor[T any]() *paginator[T] {
-	return &paginator[T]{}
+func PaginatorFor[S any, D any](entity S, dto D) *paginator[S, D] {
+	return &paginator[S, D]{}
 }
 
-func (p *paginator[T]) WithSqlExecutor(s SqlExecutor) *paginator[T] {
+func (p *paginator[S, D]) WithSqlExecutor(s SqlExecutor) *paginator[S, D] {
 	p.s = s
 	return p
 }
 
-func (p *paginator[T]) WithQuery(query string) *paginator[T] {
+func (p *paginator[S, D]) WithQuery(query string) *paginator[S, D] {
 	p.sql = query
 	return p
 }
 
-func (p *paginator[T]) WithApiParams(params ApiParams) *paginator[T] {
+func (p *paginator[S, D]) WithApiParams(params ApiParams) *paginator[S, D] {
 	p.params = params
 	return p
 }
 
-func (p *paginator[T]) WithMapperFunc(funcMapDbToDto func([]any) []T) *paginator[T] {
+func (p *paginator[S, D]) WithMapperFunc(funcMapDbToDto func([]S) []D) *paginator[S, D] {
 	p.funcMapDbToDto = funcMapDbToDto
 	return p
 }
 
-func (p *paginator[T]) WithQueryArgs(args ...interface{}) *paginator[T] {
+func (p *paginator[S, D]) WithQueryArgs(args ...interface{}) *paginator[S, D] {
 	p.args = append(p.args, args...)
 	return p
 }
 
-func (p *paginator[T]) Do() (*PaginationResponse[T], error) {
+func (p *paginator[S, D]) Do() (*PaginationResponse[D], error) {
 
 	//Todo test if all fields were populated
 	if p.params.Order == nil {
@@ -57,7 +57,7 @@ func (p *paginator[T]) Do() (*PaginationResponse[T], error) {
 	var err error
 
 	if p.funcMapDbToDto != nil {
-		resultList := make([]interface{}, 0)
+		resultList := make([]S, 0)
 		totalLines, err = p.s.readManyPaginated(p.sql, &resultList, p.params, p.args...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read paged object")
@@ -71,7 +71,7 @@ func (p *paginator[T]) Do() (*PaginationResponse[T], error) {
 		}
 
 	} else {
-		resultList := make([]T, 0)
+		resultList := make([]D, 0)
 		totalLines, err = p.s.readManyPaginated(p.sql, &resultList, p.params, p.args...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read paged object")
