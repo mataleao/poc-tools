@@ -54,53 +54,81 @@ type ApiParams struct {
 	Logger           interface{}
 }
 
-func NoOrders() []Order {
-	return make([]Order, 0)
+type apiParam struct {
+	Options map[string]bool
+	logger  interface{}
+	ctx     *gin.Context
+	filters *[]Filter
+	order   *Order
 }
 
-func NoFilters() []Filter {
-	return make([]Filter, 0)
+func CreateApiParam(ctx *gin.Context) *apiParam {
+	return &apiParam{ctx: ctx}
 }
 
-func CreateApiParam(ctx *gin.Context, log interface{}, fields []Filter, orders []Order) ApiParams {
+func (a *apiParam) WithLog(log interface{}) *apiParam {
+	a.logger = log
+	return a
+}
 
-	pagination := GeneratePaginationFromRequest(ctx)
-	filters := GenerateFilterFromRequest(ctx, fields)
-	order := GenerateOrderFromRequest(ctx, orders)
+func (a *apiParam) WithFilters(filters *[]Filter) *apiParam {
+	a.filters = filters
+	return a
+}
 
-	requestedURLPath := ctx.Request.URL.Path
-	return ApiParams{
+func (a *apiParam) WithOrder(order *Order) *apiParam {
+	a.order = order
+	return a
+}
+
+func (a *apiParam) Build() *ApiParams {
+
+	pagination := GeneratePaginationFromRequest(a.ctx)
+	var requestOrder *Order
+	var requestFilters []Filter
+
+	if a.filters == nil {
+		requestFilters = []Filter{}
+	} else {
+		requestFilters = generateFilterFromRequest(a.ctx, *a.filters)
+
+	}
+
+	if hasOrder(a.ctx, a.order) {
+		requestOrder = a.order
+	}
+
+	requestedURLPath := a.ctx.Request.URL.Path
+
+	return &ApiParams{
 		RequestedURLPath: requestedURLPath,
-		Filters:          filters,
+		Filters:          requestFilters,
 		Pagination:       pagination,
-		Order:            order,
-		Logger:           log,
+		Order:            requestOrder,
+		Logger:           a.logger,
 	}
 }
 
-func GenerateOrderFromRequest(c *gin.Context, orders []Order) *Order {
+func hasOrder(c *gin.Context, order *Order) bool {
 	query := c.Request.URL.Query()
-
 	for key, value := range query {
-		// Found the order key
 		if key == "order" {
 			queryValue := value[len(value)-1]
-			order := FindOrderByKey(queryValue, orders)
-			if order != nil {
-				return order
+			if order.Name == queryValue {
+				return true
 			}
 		}
 
 	}
-	return nil
+	return false
 }
 
-func GenerateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
+func generateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
 	fs := []Filter{}
 	query := c.Request.URL.Query()
 
 	for key, value := range query {
-		filter := FindFilterByKey(key, fields)
+		filter := findFilterByKey(key, fields)
 		if filter != nil {
 			queryValue := value[len(value)-1]
 			filter.Value = queryValue
@@ -111,16 +139,7 @@ func GenerateFilterFromRequest(c *gin.Context, fields []Filter) []Filter {
 	return fs
 }
 
-func FindFilterByKey(key string, list []Filter) *Filter {
-	for i, b := range list {
-		if b.Name == key {
-			return &list[i]
-		}
-	}
-	return nil
-}
-
-func FindOrderByKey(key string, list []Order) *Order {
+func findFilterByKey(key string, list []Filter) *Filter {
 	for i, b := range list {
 		if b.Name == key {
 			return &list[i]

@@ -8,30 +8,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var Option = struct {
+	NoCount string
+}{
+	NoCount: "no_count",
+}
+
 type paginator[S any, D any] struct {
-	s              SqlExecutor
+	s              *SqlExecutor
 	sql            string
-	params         ApiParams
+	params         *ApiParams
 	response       PaginationResponse[D]
 	funcMapDbToDto func([]S) []D
 	args           []interface{}
 }
 
-func Paginator[S any, D any]() *paginator[S, D] {
-	return &paginator[S, D]{}
+func PaginatorForQuery[S any, D any](query string) *paginator[S, D] {
+	return &paginator[S, D]{sql: query}
 }
 
-func (p *paginator[S, D]) WithSqlExecutor(s SqlExecutor) *paginator[S, D] {
+func (p *paginator[S, D]) WithSqlExecutor(s *SqlExecutor) *paginator[S, D] {
 	p.s = s
 	return p
 }
 
-func (p *paginator[S, D]) WithQuery(query string) *paginator[S, D] {
-	p.sql = query
-	return p
-}
-
-func (p *paginator[S, D]) WithApiParams(params ApiParams) *paginator[S, D] {
+func (p *paginator[S, D]) WithApiParams(params *ApiParams) *paginator[S, D] {
 	p.params = params
 	return p
 }
@@ -48,17 +49,30 @@ func (p *paginator[S, D]) WithQueryArgs(args ...interface{}) *paginator[S, D] {
 
 func (p *paginator[S, D]) Do() (*PaginationResponse[D], error) {
 
-	//Todo test if all fields were populated
+	if p.s == nil {
+		ds := DbSessionCreate(false)
+		s := CreateSqlExecutor(ds)
+		p.s = &s
+	}
+	if p.params == nil {
+		p.params = &ApiParams{
+			RequestedURLPath: "/",
+			Pagination:       Pagination{},
+			Order:            &Order{OrderField: "id"},
+		}
+	}
+
 	if p.params.Order == nil {
 		p.params.Order = &Order{OrderField: "id"}
 	}
 
 	var totalLines int64
 	var err error
+	sx := *p.s
 
 	if p.funcMapDbToDto != nil {
 		resultList := make([]S, 0)
-		totalLines, err = p.s.readManyPaginated(p.sql, &resultList, p.params, p.args...)
+		totalLines, err = sx.readManyPaginated(p.sql, &resultList, p.params, p.args...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read paged object")
 		}
@@ -72,7 +86,7 @@ func (p *paginator[S, D]) Do() (*PaginationResponse[D], error) {
 
 	} else {
 		resultList := make([]D, 0)
-		totalLines, err = p.s.readManyPaginated(p.sql, &resultList, p.params, p.args...)
+		totalLines, err = sx.readManyPaginated(p.sql, &resultList, p.params, p.args...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read paged object")
 		}
@@ -87,32 +101,32 @@ func (p *paginator[S, D]) Do() (*PaginationResponse[D], error) {
 	return &p.response, nil
 }
 
-func FindAllPagedMapped[DBE any, DTO any](s SqlExecutor, sql string, params ApiParams, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
+// func FindAllPagedMapped[DBE any, DTO any](s SqlExecutor, sql string, params ApiParams, funcMapDbToDto func([]DBE) []DTO, args ...interface{}) (PaginationResponse[DTO], error) {
 
-	response := PaginationResponse[DTO]{}
+// 	response := PaginationResponse[DTO]{}
 
-	if params.Order == nil {
-		params.Order = &Order{OrderField: "id"}
-	}
+// 	if params.Order == nil {
+// 		params.Order = &Order{OrderField: "id"}
+// 	}
 
-	resultList := make([]DBE, 0)
-	totalLines, err := s.readManyPaginated(sql, &resultList, params, args...)
-	if err != nil {
-		return response, fmt.Errorf("unable to read paged object")
-	}
+// 	resultList := make([]DBE, 0)
+// 	totalLines, err := s.readManyPaginated(sql, &resultList, params, args...)
+// 	if err != nil {
+// 		return response, fmt.Errorf("unable to read paged object")
+// 	}
 
-	// Covert the result for DTOs
-	dtos := funcMapDbToDto(resultList)
-	response.Data = &dtos
+// 	// Covert the result for DTOs
+// 	dtos := funcMapDbToDto(resultList)
+// 	response.Data = &dtos
 
-	// Prepare the pagination response
-	response.Pagination, err = preparePaginationResponse(params, totalLines, resultList)
-	if err != nil {
-		return response, fmt.Errorf("unable to read paged object")
-	}
+// 	// Prepare the pagination response
+// 	response.Pagination, err = preparePaginationResponse(params, totalLines, resultList)
+// 	if err != nil {
+// 		return response, fmt.Errorf("unable to read paged object")
+// 	}
 
-	return response, err
-}
+// 	return response, err
+// }
 
 func GeneratePaginationFromRequest(c *gin.Context) Pagination {
 	p := Pagination{}
@@ -140,7 +154,7 @@ func GeneratePaginationFromRequest(c *gin.Context) Pagination {
 
 }
 
-func preparePaginationResponse(p ApiParams, totalLines int64, list interface{}) (PaginationNavigationData, error) {
+func preparePaginationResponse(p *ApiParams, totalLines int64, list interface{}) (PaginationNavigationData, error) {
 
 	var pnd PaginationNavigationData
 	if len(p.RequestedURLPath) == 0 {
@@ -227,5 +241,8 @@ func getPaginationNavigationData(urlPath string, previousMarker, nextMarker int6
 }
 
 func getDefaultPaginationRequest() Pagination {
+	if DefaultPaginationLimit == 0 {
+		DefaultPaginationLimit = 10
+	}
 	return Pagination{Marker: "", Limit: DefaultPaginationLimit}
 }

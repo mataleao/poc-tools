@@ -12,7 +12,7 @@ const (
 	ROUND_BRACKET_PATTERN = `\([^)()]+\)`
 )
 
-func getPaginatedQuery(query string, p ApiParams) (result string, paginationParams []interface{}) {
+func getPaginatedQuery(query string, p *ApiParams) (result string, paginationParams []interface{}) {
 
 	ordered := false
 	marker, err := strconv.Atoi(p.Pagination.Marker)

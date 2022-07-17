@@ -6,7 +6,7 @@ import (
 
 type SqlExecutor interface {
 	ReadMany(sql string, entity interface{}, pars ...interface{}) error
-	readManyPaginated(sql string, entity interface{}, p ApiParams, pars ...interface{}) (total int64, err error)
+	readManyPaginated(sql string, entity interface{}, p *ApiParams, pars ...interface{}) (total int64, err error)
 	ReadOne(sqlStmt string, entity interface{}, pars ...interface{}) error
 	Write(sql string, entity interface{}) (uint64, error)
 }
@@ -34,7 +34,7 @@ func (S *sqlExecutor) ReadMany(query string, entity interface{}, pars ...interfa
 	return nil
 }
 
-func (S *sqlExecutor) readManyPaginated(sql string, entity interface{}, apiParam ApiParams, pars ...interface{}) (total int64, err error) {
+func (S *sqlExecutor) readManyPaginated(sql string, entity interface{}, apiParam *ApiParams, pars ...interface{}) (total int64, err error) {
 
 	queryToBeCounted, extraParsToBeCounted := getFilteredQuery(sql, apiParam.Filters)
 	extraParsToBeCounted = append(pars, extraParsToBeCounted...)
